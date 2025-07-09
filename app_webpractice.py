@@ -25,7 +25,7 @@ def message(message_id):
         else: 
             raise KeyError
     except KeyError:
-        error = "We do not have that message number. Please try again."
+        error = "Sorry, we do not have data on that. Please try again."
     #import pdb;pdb.set_trace()
     return render_template('index.html', file_name=jsfile_name, result=message, message_id=message_id, error=error)
 
