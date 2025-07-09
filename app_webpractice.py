@@ -8,9 +8,10 @@ app.config['FILE_DATA'] = None
 
 @app.route('/')
 def index():
+    error=None
     result = None
     file_current = app.config['FILE'].filename if app.config['FILE'] else None
-    return render_template('index.html', result=result, file_name=file_current)
+    return render_template('index.html', result=result, file_name=file_current, error=error)
 
 @app.route('/message/<message_id>', methods=['POST', 'GET'])
 def message(message_id):
@@ -31,10 +32,12 @@ def message(message_id):
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    #import pdb;pdb.set_trace()
+    
     input_file = request.files.get('myfile_name')
     #get file extension --- this can process json files only
+    
     file_ext = input_file.filename.split('.')[-1] if input_file else ''
+
 
     #check if file is present and it must be json
     #this can process json files only
@@ -44,7 +47,11 @@ def submit():
             app.config['FILE_DATA'] = json.load(app.config['FILE'])
         else:
             error = "Chosen file is not a JSON file. Please try again"
-            return render_template('index.html',error=error,result=None)
+            
+    elif not input_file and app.config['FILE']==None:
+        error = "No file selected. Please choose a JSON file."
+        return render_template('index.html', result=None, error=error)
+    
     
     message_id = request.form['message_number']
 
