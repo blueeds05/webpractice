@@ -47,6 +47,7 @@ def submit():
             app.config['FILE_DATA'] = json.load(app.config['FILE'])
         else:
             error = "Chosen file is not a JSON file. Please try again"
+            return render_template('index.html', result=None, error=error)
             
     elif not input_file and app.config['FILE']==None:
         error = "No file selected. Please choose a JSON file."
