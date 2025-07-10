@@ -1,64 +1,129 @@
-from flask import Flask, render_template, redirect, request, url_for
+from flask import Flask, render_template, request, session, redirect, url_for
 import json
+import mimetypes
+import os
+import uuid
 
 app = Flask(__name__)
+app.secret_key = 'secret606560'  # Use a secure, random secret key in production
 
-app.config['FILE'] = None
-app.config['FILE_DATA'] = None
+# Configuration for temporary file storage
+UPLOAD_FOLDER = 'temp_uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/')
 def index():
-    app.config['FILE'] = None
-    app.config['FILE_DATA'] = None
-    error=None
-    result = None
-    file_current = app.config['FILE'].filename if app.config['FILE'] else None
-    return render_template('index.html', result=result, file_name=file_current, error=error)
+    # Clear session data on home, including the stored file path
+    if 'uploaded_file_path' in session:
+        try:
+            os.remove(session['uploaded_file_path'])
+        except OSError:
+            pass # Ignore if file doesn't exist or permission error
+    session.clear()
+    return render_template('index.html', result=None, file_name=None, error=None, current_message_id=None)
 
-@app.route('/message/<message_id>', methods=['POST', 'GET'])
-def message(message_id):
-    error=None
-    message=None
-    jsfile = app.config['FILE']
-    jsfile_name = jsfile.filename
-    data = app.config['FILE_DATA']
-    try: 
-        if message_id in data:
-            message = data[message_id]  
-        else: 
-            raise KeyError
-    except KeyError:
-        error = "Sorry, we do not have data on that. Please try again."
-    #import pdb;pdb.set_trace()
-    return render_template('index.html', file_name=jsfile_name, result=message, message_id=message_id, error=error)
+# Route to handle file uploads and initial message_id submission
+@app.route('/upload_and_query', methods=['POST'])
+def upload_and_query():
+    error = None
+    uploaded_file_name = session.get('uploaded_file_name')
+    uploaded_file_path = session.get('uploaded_file_path')
 
-@app.route('/submit', methods=['POST'])
-def submit():
-    
+    # Handle file upload
     input_file = request.files.get('myfile_name')
-    #get file extension --- this can process json files only
-    
-    file_ext = input_file.filename.split('.')[-1] if input_file else ''
-    
-    #check if file is present and it must be json
-    #this can process json files only
-    if input_file:
-        if file_ext.lower() == 'json':
-            app.config['FILE'] = input_file
-            app.config['FILE_DATA'] = json.load(app.config['FILE'])
+    if input_file and input_file.filename != '':
+        mimetype = mimetypes.guess_type(input_file.filename)[0]
+        if mimetype == 'application/json':
+            try:
+                # Clean up previous file if a new one is uploaded
+                if uploaded_file_path and os.path.exists(uploaded_file_path):
+                    os.remove(uploaded_file_path)
+
+                unique_filename = str(uuid.uuid4()) + os.path.splitext(input_file.filename)[1]
+                save_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                input_file.save(save_path)
+
+                session['uploaded_file_name'] = input_file.filename
+                session['uploaded_file_path'] = save_path
+                uploaded_file_name = input_file.filename
+
+                # Test if the file is valid JSON immediately after saving
+                with open(save_path, 'r') as f:
+                    json.load(f) # Just load to test validity
+                
+            except json.JSONDecodeError:
+                error = "Invalid JSON format. Please upload a valid JSON file."
+                if os.path.exists(save_path): os.remove(save_path)
+                session.pop('uploaded_file_name', None)
+                session.pop('uploaded_file_path', None)
+                return render_template('index.html', result=None, error=error, file_name=None, current_message_id=None)
+            except Exception as e:
+                error = f"An unexpected error occurred during file upload: {e}"
+                if os.path.exists(save_path): os.remove(save_path)
+                session.pop('uploaded_file_name', None)
+                session.pop('uploaded_file_path', None)
+                return render_template('index.html', result=None, error=error, file_name=None, current_message_id=None)
         else:
-            error = "Chosen file is not a JSON file. Please try again"
-            return render_template('index.html', result=None, error=error)
-            
-    elif not input_file and app.config['FILE']==None:
-        error = "No file selected. Please choose a JSON file."
-        return render_template('index.html', result=None, error=error)
-    
-    
-    message_id = request.form['message_number']
+            error = "Chosen file is not a JSON file. Please try again."
+            return render_template('index.html', result=None, error=error, file_name=uploaded_file_name, current_message_id=None)
+    elif not uploaded_file_path: # No new file uploaded and no path in session
+        error = "No file selected or no JSON data found from a previous upload. Please choose a JSON file."
+        return render_template('index.html', result=None, error=error, file_name=None, current_message_id=None)
 
-    return redirect(url_for('message',message_id=message_id))
+    # Get the message ID from the form after file handling
+    message_id_from_form = request.form.get('message_number', '').strip()
+    if not message_id_from_form:
+        error = "Please enter a message number."
+        # If there was a successful file upload but no message ID, render with error
+        return render_template('index.html', result=None, error=error, file_name=session.get('uploaded_file_name'), current_message_id=None)
 
+    # Redirect to the /message/<message_id> route
+    return redirect(url_for('show_message', message_id=message_id_from_form))
+
+
+# Route to display a specific message based on message_id in URL
+@app.route('/message/<message_id>', methods=['GET'])
+def show_message(message_id):
+    error = None
+    message_result = None
+    uploaded_file_name = session.get('uploaded_file_name')
+    uploaded_file_path = session.get('uploaded_file_path')
+
+    if not uploaded_file_path:
+        error = "No JSON file has been uploaded yet. Please go to the home page and upload one."
+        return render_template('index.html', result=None, error=error, file_name=None, current_message_id=None)
+
+    json_data = None
+    try:
+        with open(uploaded_file_path, 'r') as f:
+            json_data = json.load(f)
+    except FileNotFoundError:
+        error = "Uploaded file not found on the server. Please re-upload the file."
+        session.pop('uploaded_file_name', None)
+        session.pop('uploaded_file_path', None)
+        return render_template('index.html', result=None, error=error, file_name=None, current_message_id=None)
+    except json.JSONDecodeError:
+        error = "The stored file is corrupted or not valid JSON. Please re-upload the file."
+        session.pop('uploaded_file_name', None)
+        session.pop('uploaded_file_path', None)
+        return render_template('index.html', result=None, error=error, file_name=None, current_message_id=None)
+    except Exception as e:
+        error = f"Error loading stored file: {e}. Please re-upload the file."
+        session.pop('uploaded_file_name', None)
+        session.pop('uploaded_file_path', None)
+        return render_template('index.html', result=None, error=error, file_name=None, current_message_id=None)
+
+    if json_data:
+        if message_id in json_data:
+            message_result = json_data[message_id]
+        else:
+            error = f"Sorry, message ID '{message_id}' not found in the uploaded data. Please try again."
+    else:
+        error = "No JSON data available to query. This should not happen if `uploaded_file_path` exists."
+
+    return render_template('index.html', file_name=uploaded_file_name, result=message_result, current_message_id=message_id, error=error)
 
 if __name__ == "__main__":
     app.run(debug=True)
