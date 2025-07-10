@@ -23,6 +23,15 @@ body {
     box-sizing: border-box;
     transition: max-width 0.2s, padding 0.2s;
 }
+pre {
+    white-space: pre-wrap; 
+    word-break: break-word; 
+    margin:0; 
+    display:inline-block; 
+    min-width:0; 
+    max-width:100%; 
+    overflow-x:auto;
+}
 h2 {
     text-align: center;
     color: #2563eb;
@@ -36,9 +45,9 @@ label {
     display: block;
     margin-bottom: 4px;
 }
-label , .current_file {
+label.current_file {
     font-weight: 500;
-    color: #ec371f;
+    color: #007708;
     display: block;
     margin-bottom: 4px;
 }

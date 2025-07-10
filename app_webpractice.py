@@ -39,8 +39,7 @@ def submit():
     #get file extension --- this can process json files only
     
     file_ext = input_file.filename.split('.')[-1] if input_file else ''
-
-
+    
     #check if file is present and it must be json
     #this can process json files only
     if input_file:
