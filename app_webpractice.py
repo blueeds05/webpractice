@@ -8,6 +8,8 @@ app.config['FILE_DATA'] = None
 
 @app.route('/')
 def index():
+    app.config['FILE'] = None
+    app.config['FILE_DATA'] = None
     error=None
     result = None
     file_current = app.config['FILE'].filename if app.config['FILE'] else None
