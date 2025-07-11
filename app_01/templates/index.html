@@ -1,0 +1,33 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" >
+        <link rel="stylesheet" type="text/css" 
+        href="{{ url_for('static', filename='css/styles.css') }}">
+        <title>Message Lookup</title>
+    </head>
+    <body>
+        <div>
+            <h2><a href="{{ url_for('index') }}">🔍</a> Message Lookup</h2>
+            <form action="{{ url_for('upload_and_query') }}" enctype="multipart/form-data" method="post">
+                <input type="file" name="myfile_name" id="myfile_ID" accept="application/json"><br>
+                {% if file_name %}
+                <label class="current_file" for="myfile_name">Current File: {{ file_name }}</label><br>
+                {% endif %}
+                <input type="text" name="message_number" id="message_id" placeholder="Input key here:  e.g. 123" required><br><br>
+                <input type="submit" value="LOOKUP">
+            </form>
+            {% if result is not none %}
+                <div class="result">
+                    <strong>Message {{ message_id }}</strong><br>
+                    <hr>
+                    <pre>{{ result }}</pre>
+                </div><br><br>
+            {% endif%}
+
+            {% if error %}
+                <div class="error">{{ error }}</div>
+            {% endif %}
+        </div>
+    </body>
+</html>
