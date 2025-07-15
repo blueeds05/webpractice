@@ -1,7 +1,7 @@
 import os, sys
 
 # edit your path below
-sys.path.append("/home/riveredge.heliohost.us/httpdocs/app_01");
+sys.path.append("/home/riveredge.heliohost.us/httpdocs/justmyapp");
 
 sys.path.insert(0, os.path.dirname(__file__))
 from app_webpractice import app as application
