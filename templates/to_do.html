@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+    {% block head %}  
+        <title>Task Matters V2</title>
+    {% endblock %}
+
+    {% set active_page = 'to_do' %}
+    {% block navbar %}{% endblock %}
+    
+    {% block main_content %}
+
+        <div class="content">
+            <div>
+                <h1>Tasks To Do</h1>
+            </div>
+                <table>
+                    <tr>
+                        <th>Task</th>
+                        <th>Added</th>
+                        <th>Actions</th>
+                    </tr>
+                    <tr>
+                        <td>Content</td>
+                        <td>Data</td>
+                        <td>More</td>
+                    </tr>
+                </table>
+
+                    <form action="/to_do" enctype="multipart/form-data" method="post">
+                        <input type="text" name="content" id="content">
+                        <input type="submit" value="Add Task" id="btn_add">
+                    </form>
+                
+        </div>
+    {% endblock %}        

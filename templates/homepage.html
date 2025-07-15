@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block head %}  
+<title>My Homepage</title>
+{% endblock %}
+{% set active_page = 'home' %}
+{% block navbar %}
+{% endblock %}
+{% block main_content %}
+    <h1> Welcome to My Website </h1>
+    <h5>Flask Version: {{ flask_ver }}</h5>
+    <h5>Python Version: {{ python_ver }}</h5>
+{% endblock %}

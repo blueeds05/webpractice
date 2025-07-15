@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+    {% block head %}  
+        <title>Adding Two Numbers</title>
+    {% endblock %}
+
+    {% set active_page = 'calculate-sum' %}
+    {% block navbar %}{% endblock %}
+    
+    {% block main_content %}
+
+        <div>
+            <div>
+                <label>Add two numbers</label>
+            </div>
+                <div>
+                    <form action="/sum" enctype="multipart/form-data" method="post">
+                        <input type="number" name="num1" placeholder="first number" required><br>
+                        <input type="number" name="num2" placeholder="second number" required><br>
+                        <input type="submit" value="SUM">
+                    </form>
+                </div>
+            {% if sum %}
+                <b>Sum of {{ num1 }} and {{ num2 }} is {{ sum }}. Isn't it awesome? :-D</b>
+            {% endif%}    
+        </div>
+    {% endblock %}        

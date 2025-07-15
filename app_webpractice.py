@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for
+import importlib.metadata, sys
 import json
 import mimetypes
 import os
@@ -6,6 +7,8 @@ import uuid
 
 app = Flask(__name__)
 app.secret_key = 'secret606560'  # Use a secure, random secret key in production
+flask_version = importlib.metadata.version("flask")
+
 
 # Configuration for temporary file storage
 UPLOAD_FOLDER = 'temp_uploads'
@@ -14,6 +17,10 @@ if not os.path.exists(UPLOAD_FOLDER):
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/')
+def home():
+    return render_template('homepage.html', flask_ver=flask_version, python_ver=sys.version.split(' ')[0])
+
+@app.route('/message-index')
 def index():
     # Clear session data on home, including the stored file path
     if 'uploaded_file_path' in session:
@@ -23,6 +30,20 @@ def index():
             pass # Ignore if file doesn't exist or permission error
     session.clear()
     return render_template('index.html', result=None, file_name=None, error=None, current_message_id=None)
+
+#CALCULATOR PAGE 
+@app.route('/calc-add')
+def calculate_sum():
+    return render_template('calculator.html', sum=None, num1=None, num2=None)
+
+@app.route('/sum', methods=['POST'])
+def add_nums():
+    num1 = request.form.get('num1')
+    num2 = request.form.get('num2')
+    #import pdb;pdb.set_trace()
+    sum = int(num1) + int(num2)
+    
+    return render_template('calculator.html', num1=num1, num2=num2, sum=sum)
 
 # Route to handle file uploads and initial message_id submission
 @app.route('/upload_and_query', methods=['POST'])
@@ -52,7 +73,7 @@ def upload_and_query():
                 # Test if the file is valid JSON immediately after saving
                 with open(save_path, 'r') as f:
                     json.load(f) # Just load to test validity
-                
+
             except json.JSONDecodeError:
                 error = "Invalid JSON format. Please upload a valid JSON file."
                 if os.path.exists(save_path): os.remove(save_path)
@@ -124,6 +145,11 @@ def show_message(message_id):
         error = "No JSON data available to query. This should not happen if `uploaded_file_path` exists."
 
     return render_template('index.html', file_name=uploaded_file_name, result=message_result, current_message_id=message_id, error=error)
+
+#To So list page
+@app.route('/to-do', methods=['GET'])
+def add_task():
+    return render_template('to_do.html')
 
 if __name__ == "__main__":
     app.run(debug=True)
