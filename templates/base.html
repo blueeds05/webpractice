@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/gstyles.css') }}">
     {% block head %} {% endblock %}
 </head>
 <body>
@@ -13,7 +13,7 @@
             <a class = "{{ 'active' if active_page == 'index' else '' }}" href="/message-index">Messages</a>
             <a class = "{{ 'active' if active_page == 'calculate-sum' else '' }}" href="/calc-add">Calculate - Sum</a>
             <a class = "{{ 'active' if active_page == 'to_do' else '' }}" href="/to-do">To Do</a>
-            
+            <a class = "{{ 'active' if active_page == 'math_games' else '' }}" href="/math_games">Math Games</a>
         </div>
     {% block navbar %} {% endblock %}
     {% block main_content %} {% endblock %}

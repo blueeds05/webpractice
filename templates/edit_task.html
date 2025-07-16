@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+    {% block head %}  
+        <title>Task Matters V2</title>
+    {% endblock %}
+
+    {% set active_page = 'to_do' %}
+    {% block navbar %}{% endblock %}
+    
+    {% block main_content %}
+        <div>
+            <h1>Edit task ID: {{ id }}</h1>
+            <form action="/to-do/update/{{ task_id }}" method="post">
+                <label for="task_content">Current Task:
+                   <input type="text" name="task_content" id="task_content" value="{{ task }}">
+                </label>
+                 <input type="submit" value="Update Task">
+            </form>
+            
+        </div>
+        
+    {% endblock %}        

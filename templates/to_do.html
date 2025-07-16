@@ -13,21 +13,29 @@
             <div>
                 <h1>Tasks To Do</h1>
             </div>
+                {% if tasks|count < 1%}
+                <h3>There are no tasks... Create one here!</h3>
+                {% else %}
                 <table>
                     <tr>
                         <th>Task</th>
                         <th>Added</th>
                         <th>Actions</th>
                     </tr>
+                    {% for task in tasks %}
                     <tr>
-                        <td>Content</td>
-                        <td>Data</td>
-                        <td>More</td>
+                        <td>{{ task.content }}</td>
+                        <td>{{ task.created.strftime("%Y-%m-%d %H:%M:%S")}}</td>
+                        <td>
+                            <a href="/to-do/edit/{{task.id}}">🖍️</a>
+                            <a href="/to-do/delete/{{task.id}}" >🗑️</a>
+                        </td>
                     </tr>
+                    {% endfor %}
                 </table>
-
-                    <form action="/to_do" enctype="multipart/form-data" method="post">
-                        <input type="text" name="content" id="content">
+                {% endif %}
+                    <form action="/to-do" enctype="multipart/form-data" method="post">
+                        <input type="text" name="content" id="content" required>
                         <input type="submit" value="Add Task" id="btn_add">
                     </form>
                 

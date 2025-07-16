@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Challenge Game</title>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Variables for easy theming */
+        :root {
+            --primary-color: #2563eb; /* Blue 700 */
+            --primary-dark: #1d4ed8; /* Blue 800 */
+            --accent-color: #04AA6D; /* Green for correct answers */
+            --warning-color: #f59e0b; /* Yellow for timer */
+            --error-color: #dc2626; /* Red for wrong answers */
+            --text-color-dark: #1f2937; /* Gray 800 */
+            --text-color-light: #ffffff;
+            --bg-color-light: #f9fafb; /* Gray 50 */
+            --bg-color-medium: #e0e7ef; /* Blue 100 */
+            --card-bg: #ffffff;
+            --border-radius-lg: 16px;
+            --border-radius-md: 10px;
+            --border-radius-sm: 6px;
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --font-family-inter: 'Inter', sans-serif;
+        }
+
+        /* Universal box-sizing for consistent layout */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family-inter);
+            background: linear-gradient(135deg, var(--bg-color-light) 0%, var(--bg-color-medium) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: var(--text-color-dark);
+            padding: 20px;
+            overflow: auto; /* Allow scrolling if content is too tall */
+        }
+
+        .game-container {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 30px;
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            position: relative;
+            overflow: hidden; /* For feedback animations */
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 10px 15px;
+            background-color: var(--bg-color-light);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-md);
+        }
+
+        .timer {
+            color: var(--warning-color);
+        }
+
+        .score {
+            color: var(--primary-color);
+        }
+
+        .question-area {
+            background-color: var(--primary-color);
+            color: var(--text-color-light);
+            padding: 25px 20px;
+            border-radius: var(--border-radius-md);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .choices {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .choice-button {
+            background-color: var(--primary-color);
+            color: var(--text-color-light);
+            border: none;
+            padding: 18px 10px;
+            border-radius: var(--border-radius-md);
+            font-size: 1.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+            box-shadow: var(--shadow-md);
+            outline: none; /* Remove default focus outline */
+        }
+
+        .choice-button:hover:not(:disabled) {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .choice-button:active:not(:disabled) {
+            transform: translateY(0);
+            box-shadow: var(--shadow-md);
+        }
+
+        .choice-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .feedback-message {
+            font-size: 1.4rem;
+            font-weight: 700;
+            min-height: 30px; /* Reserve space to prevent layout shift */
+            margin-bottom: 15px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .feedback-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .feedback-message.correct {
+            color: var(--accent-color);
+        }
+
+        .feedback-message.wrong {
+            color: var(--error-color);
+        }
+
+        .start-button, .restart-button {
+            background: linear-gradient(90deg, var(--accent-color) 0%, #059669 100%);
+            color: var(--text-color-light);
+            border: none;
+            padding: 15px 25px;
+            border-radius: var(--border-radius-md);
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+            box-shadow: var(--shadow-md);
+            outline: none;
+        }
+
+        .start-button:hover, .restart-button:hover {
+            background: linear-gradient(90deg, #059669 0%, var(--accent-color) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .start-button:active, .restart-button:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-md);
+        }
+
+        .game-over-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 10;
+        }
+
+        .game-over-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .game-over-overlay h2 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .game-over-overlay p {
+            font-size: 1.5rem;
+            color: var(--text-color-dark);
+            margin-bottom: 20px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+                gap: 15px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .stats-bar {
+                font-size: 1rem;
+                padding: 8px 12px;
+            }
+
+            .question-area {
+                font-size: 2rem;
+                padding: 20px 15px;
+            }
+
+            .choices {
+                grid-template-columns: 1fr; /* Stack buttons on very small screens */
+            }
+
+            .choice-button {
+                font-size: 1.5rem;
+                padding: 15px 10px;
+            }
+
+            .feedback-message {
+                font-size: 1.2rem;
+            }
+
+            .start-button, .restart-button {
+                font-size: 1.1rem;
+                padding: 12px 20px;
+            }
+
+            .game-over-overlay h2 {
+                font-size: 2rem;
+            }
+
+            .game-over-overlay p {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% block navbar %}{% endblock %}
+    <div class="game-container">
+        <h1>Math Challenge!</h1>
+
+        <div class="stats-bar">
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="timer">Time: <span id="timer">4</span>s</div>
+        </div>
+
+        <div class="question-area" id="question">
+            Ready to play?
+        </div>
+
+        <div class="choices" id="choices">
+            <button class="choice-button" data-choice="0">0</button>
+            <button class="choice-button" data-choice="0">0</button>
+            <button class="choice-button" data-choice="0">0</button>
+        </div>
+
+        <div class="feedback-message" id="feedback"></div>
+
+        <button class="start-button" id="startButton">Start Game</button>
+
+        <div class="game-over-overlay" id="gameOverOverlay">
+            <h2 id="gameOverTitle"></h2>
+            <p id="gameOverMessage"></p>
+            <button class="restart-button" id="restartButton">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state variables
+        let score = 0;
+        let timeLeft = 4;
+        let timerInterval;
+        let currentQuestion = {}; // Stores {num1, num2, answer}
+        let gameActive = false;
+        const WIN_SCORE = 50;
+
+        // DOM Elements
+        const scoreDisplay = document.getElementById('score');
+        const timerDisplay = document.getElementById('timer');
+        const questionDisplay = document.getElementById('question');
+        const choicesContainer = document.getElementById('choices');
+        const choiceButtons = document.querySelectorAll('.choice-button');
+        const feedbackMessage = document.getElementById('feedback');
+        const startButton = document.getElementById('startButton');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const gameOverTitle = document.getElementById('gameOverTitle');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        const restartButton = document.getElementById('restartButton');
+
+        // --- Game Logic Functions ---
+
+        /**
+         * Initializes or restarts the game.
+         */
+        function startGame() {
+            score = 0;
+            scoreDisplay.textContent = score;
+            gameActive = true;
+            startButton.style.display = 'none'; // Hide start button
+            gameOverOverlay.classList.remove('show'); // Hide game over overlay
+            feedbackMessage.textContent = ''; // Clear feedback
+            enableChoiceButtons(); // Ensure buttons are enabled
+            generateProblem(); // Start with the first problem
+        }
+
+        /**
+         * Generates a new single-digit addition problem.
+         */
+        function generateProblem() {
+            // Clear previous timer if any
+            clearInterval(timerInterval);
+            timeLeft = 4;
+            timerDisplay.textContent = timeLeft;
+            timerDisplay.style.color = 'var(--warning-color)'; // Reset timer color
+
+            // Hide feedback message
+            feedbackMessage.classList.remove('show', 'correct', 'wrong');
+
+            // Generate two random single digits (0-9)
+            const num1 = Math.floor(Math.random() * 10);
+            const num2 = Math.floor(Math.random() * 10);
+            const correctAnswer = num1 + num2;
+
+            currentQuestion = { num1, num2, answer: correctAnswer };
+
+            questionDisplay.textContent = `${num1} + ${num2} = ?`;
+
+            // Generate choices
+            const choices = [correctAnswer];
+            while (choices.length < 3) {
+                let randomChoice = Math.floor(Math.random() * 19); // Answers can range from 0 (0+0) to 18 (9+9)
+                // Ensure choices are unique and not too far from correct answer (optional, but good for game flow)
+                if (!choices.includes(randomChoice) && Math.abs(randomChoice - correctAnswer) <= 5) {
+                    choices.push(randomChoice);
+                } else if (!choices.includes(randomChoice) && choices.length === 2) {
+                    // Fallback to ensure we always get 3 choices even if they are a bit further
+                    choices.push(randomChoice);
+                }
+            }
+
+            // Shuffle choices
+            shuffleArray(choices);
+
+            // Populate choice buttons
+            choiceButtons.forEach((button, index) => {
+                button.textContent = choices[index];
+                button.dataset.choice = choices[index]; // Store the value in data-choice
+            });
+
+            startTimer(); // Start the timer for the new problem
+        }
+
+        /**
+         * Starts the countdown timer for the current problem.
+         */
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+
+                if (timeLeft <= 1) {
+                    timerDisplay.style.color = 'var(--error-color)'; // Red when time is almost up
+                } else {
+                    timerDisplay.style.color = 'var(--warning-color)'; // Yellow during countdown
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleWrongAnswer("Time's up!");
+                }
+            }, 1000); // Update every second
+        }
+
+        /**
+         * Checks the player's selected answer.
+         * @param {number} selectedChoice - The number chosen by the player.
+         */
+        function checkAnswer(selectedChoice) {
+            if (!gameActive) return; // Prevent interaction if game is not active
+
+            clearInterval(timerInterval); // Stop the timer immediately
+
+            disableChoiceButtons(); // Disable buttons to prevent multiple clicks
+
+            if (parseInt(selectedChoice) === currentQuestion.answer) {
+                handleCorrectAnswer();
+            } else {
+                handleWrongAnswer("Wrong answer!");
+            }
+        }
+
+        /**
+         * Handles a correct answer.
+         */
+        function handleCorrectAnswer() {
+            score++;
+            scoreDisplay.textContent = score;
+            feedbackMessage.textContent = 'Correct!';
+            feedbackMessage.classList.add('show', 'correct');
+
+            if (score >= WIN_SCORE) {
+                endGame('win');
+            } else {
+                // Generate next problem after a short delay for feedback visibility
+                setTimeout(() => {
+                    enableChoiceButtons();
+                    generateProblem();
+                }, 800);
+            }
+        }
+
+        /**
+         * Handles a wrong answer.
+         * @param {string} message - The message to display (e.g., "Time's up!", "Wrong answer!").
+         */
+        function handleWrongAnswer(message) {
+            score = 0; // Reset score
+            scoreDisplay.textContent = score;
+            feedbackMessage.textContent = message + ' Score reset to 0.';
+            feedbackMessage.classList.add('show', 'wrong');
+
+            // Generate next problem after a short delay for feedback visibility
+            setTimeout(() => {
+                enableChoiceButtons();
+                generateProblem();
+            }, 1500); // Longer delay for wrong answer feedback
+        }
+
+        /**
+         * Ends the game, displaying win or lose message.
+         * @param {string} status - 'win' or 'lose'.
+         */
+        function endGame(status) {
+            gameActive = false;
+            clearInterval(timerInterval);
+            disableChoiceButtons(); // Ensure buttons are disabled
+
+            gameOverOverlay.classList.add('show');
+            if (status === 'win') {
+                gameOverTitle.textContent = 'Congratulations!';
+                gameOverMessage.textContent = `You reached a score of ${WIN_SCORE}! You are a Math Master!`;
+            } else {
+                gameOverTitle.textContent = 'Game Over!';
+                gameOverMessage.textContent = `Your final score was ${score}. Try again to reach ${WIN_SCORE}!`;
+            }
+        }
+
+        /**
+         * Disables all choice buttons.
+         */
+        function disableChoiceButtons() {
+            choiceButtons.forEach(button => {
+                button.disabled = true;
+            });
+        }
+
+        /**
+         * Enables all choice buttons.
+         */
+        function enableChoiceButtons() {
+            choiceButtons.forEach(button => {
+                button.disabled = false;
+            });
+        }
+
+        /**
+         * Shuffles an array in place (Fisher-Yates algorithm).
+         * @param {Array} array - The array to shuffle.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+
+        choicesContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('choice-button') && !event.target.disabled) {
+                checkAnswer(event.target.dataset.choice);
+            }
+        });
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial state for buttons and overlay
+            disableChoiceButtons(); // Buttons are disabled until game starts
+            startButton.style.display = 'block'; // Show start button initially
+            gameOverOverlay.classList.remove('show'); // Ensure overlay is hidden
+            questionDisplay.textContent = "Click 'Start Game' to begin!";
+        });
+
+    </script>
+</body>
+</html>

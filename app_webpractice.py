@@ -1,14 +1,20 @@
 from flask import Flask, render_template, request, session, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timezone
 import importlib.metadata, sys
 import json
 import mimetypes
 import os
 import uuid
 
+
 app = Flask(__name__)
 app.secret_key = 'secret606560'  # Use a secure, random secret key in production
 flask_version = importlib.metadata.version("flask")
 
+# TO-DO APP: configure the SQLite database, relative to the app instance folder
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///task_database.db"
+db = SQLAlchemy(app)
 
 # Configuration for temporary file storage
 UPLOAD_FOLDER = 'temp_uploads'
@@ -31,19 +37,7 @@ def index():
     session.clear()
     return render_template('index.html', result=None, file_name=None, error=None, current_message_id=None)
 
-#CALCULATOR PAGE 
-@app.route('/calc-add')
-def calculate_sum():
-    return render_template('calculator.html', sum=None, num1=None, num2=None)
 
-@app.route('/sum', methods=['POST'])
-def add_nums():
-    num1 = request.form.get('num1')
-    num2 = request.form.get('num2')
-    #import pdb;pdb.set_trace()
-    sum = int(num1) + int(num2)
-    
-    return render_template('calculator.html', num1=num1, num2=num2, sum=sum)
 
 # Route to handle file uploads and initial message_id submission
 @app.route('/upload_and_query', methods=['POST'])
@@ -146,10 +140,92 @@ def show_message(message_id):
 
     return render_template('index.html', file_name=uploaded_file_name, result=message_result, current_message_id=message_id, error=error)
 
-#To So list page
-@app.route('/to-do', methods=['GET'])
+#CALCULATOR PAGE 
+@app.route('/calc-add')
+def calculate_sum():
+    return render_template('calculator.html', sum=None, num1=None, num2=None)
+
+@app.route('/sum', methods=['POST'])
+def add_nums():
+    num1 = request.form.get('num1')
+    num2 = request.form.get('num2')
+    #import pdb;pdb.set_trace()
+    sum = int(num1) + int(num2)
+    
+    return render_template('calculator.html', num1=num1, num2=num2, sum=sum)
+
+#TO DO LIST PAGE
+class MyTask(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(100), nullable=False)
+    complete = db.Column(db.Integer, default=0)
+    created = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+
+    def __repr__(self) -> str:
+        return f"Task {self.id}"
+
+@app.route('/to-do', methods=['POST','GET'])
 def add_task():
-    return render_template('to_do.html')
+    # Add a task
+    if request.method == 'POST':
+        current_task = request.form['content']
+        new_task = MyTask(content=current_task)
+        try:
+            db.session.add(new_task)
+            db.session.commit()
+            return redirect('/to-do')
+        except Exception as e:
+            print(f"ERROR: {e}")
+            return f"ERROR: {e}"
+    # See all current tasks
+    else:
+        tasks = MyTask.query.order_by(MyTask.created).all() #with .all() object will be converted to list
+        return render_template('to_do.html', tasks=tasks)
+
+@app.route('/to-do/delete/<int:id>')
+def delete_byID(id:int):
+    delete_task = MyTask.query.get_or_404(id)
+    try:
+        db.session.delete(delete_task)
+        db.session.commit()
+        return redirect('/to-do')
+    except Exception as e:
+        print(f"ERROR: {e}")
+
+@app.route('/to-do/edit/<int:id>')
+def edit(id:int):
+    edit_task = MyTask.query.get_or_404(id)
+    try:
+        # import pdb;pdb.set_trace()
+        current_task = edit_task.content
+        # return f"Edit ID: {id} {edit_task} {current_task}"
+        return render_template('edit_task.html', task_id=id, task=current_task)
+        
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return f"ERROR: {e}"
+
+@app.route('/to-do/update/<int:id>', methods=['POST'])
+def update(id:int):
+    update_task = MyTask.query.get_or_404(id)
+    try:
+        # import pdb;pdb.set_trace()
+        update_task.content = request.form['task_content']
+        # update_task.created = datetime.now(timezone.utc)
+        db.session.commit()
+        return redirect(url_for('add_task'))
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return f"ERROR: {e}"
+
+
+#MATH GAMES PAGE
+@app.route('/math_games', methods=['POST','GET'])
+def math_games():
+    return render_template('game_math.html')
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all() 
+
     app.run(debug=True)
