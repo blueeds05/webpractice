@@ -25,12 +25,66 @@
             --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
             --font-family-inter: 'Inter', sans-serif;
+            --primary-color: #2563eb; /* Blue 700 */
+            --primary-light: #60a5fa; /* Blue 400 */
+            --secondary-color: #04AA6D; /* Green for navigation hover */
+            --text-color: #0f172a; /* Slate 900 */
+            --text-light: #f2f2f2; /* Light gray for nav links */
+            --background-light: #f8fafc; /* Slate 50 */
+            --background-medium: #f1f5f9; /* Slate 100 for result background */
+            --background-dark: #333; /* Dark gray for nav */
+            --border-color: #cbd5e1; /* Slate 300 */
+            --success-color: #007708; /* Dark green for success messages */
+            --error-background: #fee2e2; /* Red 100 */
+            --error-border: #fca5a5; /* Red 300 */
+            --error-text: #b91c1c; /* Red 700 */
+            --white: #fff;
+            --black: #000;
+
+            --font-family-primary: 'Segoe UI', Arial, sans-serif;
+            --border-radius-small: 8px;
+            --border-radius-medium: 10px;
+            --border-radius-large: 16px;
+            --box-shadow-small: 0 2px 8px rgba(37,99,235,0.07);
+            --box-shadow-medium: 0 6px 32px rgba(37,99,235,0.09);
         }
 
         /* Universal box-sizing for consistent layout */
         *, *::before, *::after {
             box-sizing: border-box;
         }
+                /* --- Navigation Bar --- */
+        .topnav {
+            background-color: var(--background-dark);
+            overflow: hidden;
+            width: 100%; /* Full width for the nav bar */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+        }
+
+        /* Style the links inside the navigation bar */
+        .topnav a {
+            float: left;
+            color: var(--text-light);
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 1rem; /* Use rem for better scalability */
+            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transitions */
+        }
+
+        /* Change the color of links on hover */
+        .topnav a:hover {
+            background-color: var(--secondary-color);
+            color: var(--white); /* White text on hover for better contrast */
+        }
+
+        /* Add a color to the active/current link */
+        .topnav a.active {
+            background-color: var(--secondary-color);
+            color: var(--white);
+            font-weight: 600; /* Make active link stand out */
+        }
+
 
         body {
             font-family: var(--font-family-inter);
@@ -269,13 +323,21 @@
     </style>
 </head>
 <body>
-    {% block navbar %}{% endblock %}
+    <div>
+    {% set active_page = 'math_games' %}
+    <div class="topnav"> 
+        <a href="/">Home</a>  
+        <a href="/message-index">Messages</a>
+        <a href="/calc-add">Calculate - Sum</a>
+        <a href="/to-do">To Do</a>
+        <a class = "{{ 'active' if active_page == 'math_games' else '' }}" href="/math_games">Math Games</a>
+    </div><br>
     <div class="game-container">
         <h1>Math Challenge!</h1>
 
         <div class="stats-bar">
             <div class="score">Score: <span id="score">0</span></div>
-            <div class="timer">Time: <span id="timer">4</span>s</div>
+            <div class="timer">Time: <span id="timer">8</span>s</div>
         </div>
 
         <div class="question-area" id="question">
@@ -298,15 +360,17 @@
             <button class="restart-button" id="restartButton">Play Again</button>
         </div>
     </div>
-
+    </div>
     <script>
         // Game state variables
+        const TIME_SET = 8;
         let score = 0;
-        let timeLeft = 4;
+        let timeLeft = TIME_SET;
         let timerInterval;
         let currentQuestion = {}; // Stores {num1, num2, answer}
         let gameActive = false;
         const WIN_SCORE = 50;
+        
 
         // DOM Elements
         const scoreDisplay = document.getElementById('score');
@@ -343,7 +407,7 @@
         function generateProblem() {
             // Clear previous timer if any
             clearInterval(timerInterval);
-            timeLeft = 4;
+            timeLeft = TIME_SET;
             timerDisplay.textContent = timeLeft;
             timerDisplay.style.color = 'var(--warning-color)'; // Reset timer color
 
