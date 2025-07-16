@@ -13,6 +13,7 @@ app.secret_key = 'secret606560'  # Use a secure, random secret key in production
 flask_version = importlib.metadata.version("flask")
 
 # TO-DO APP: configure the SQLite database, relative to the app instance folder
+basedir = os.path.abspath(os.path.dirname(__file__))
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///task_database.db"
 db = SQLAlchemy(app)
 

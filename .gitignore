@@ -1,3 +1,4 @@
 .DS_Store
 static/.DS_Store
 instance/task_database.db
+task_database.db
